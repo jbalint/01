@@ -1,0 +1,123 @@
+Index: gdb/linux-thread-db.c
+===================================================================
+RCS file: /cvs/src/src/gdb/linux-thread-db.c,v
+retrieving revision 1.41
+diff -u -r1.41 linux-thread-db.c
+--- gdb/linux-thread-db.c	14 Apr 2008 14:02:23 -0000	1.41
++++ gdb/linux-thread-db.c	25 Apr 2008 11:40:14 -0000
+@@ -837,7 +837,7 @@
+       unpush_target (&thread_db_ops);
+       using_thread_db = 0;
+ 
+-      return pid_to_ptid (GET_PID (ptid));
++      return BUILD_LWP (GET_PID (ptid), GET_PID (ptid));
+     }
+ 
+   /* If we do not know about the main thread yet, this would be a good time to
+Index: gdb/testsuite/gdb.threads/exec-and-threads.c
+===================================================================
+RCS file: gdb/testsuite/gdb.threads/exec-and-threads.c
+diff -N gdb/testsuite/gdb.threads/exec-and-threads.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ gdb/testsuite/gdb.threads/exec-and-threads.c	25 Apr 2008 11:40:14 -0000
+@@ -0,0 +1,43 @@
++/* This testcase is part of GDB, the GNU debugger.
++
++   Copyright 2002, 2004, 2007, 2008 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 3 of the License, or
++   (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <pthread.h>
++
++void *thread(void *a)
++{
++	char *b = a;
++	while(1)
++	{
++		b++;
++	}
++}
++
++int main(int argc, char **argv)
++{
++	pthread_t tid;
++	pthread_create(&tid, NULL, thread, argv);
++	sleep(2);
++	if(argc == 1) /* no args in initial run */
++	{
++		char *newargs[] = {"", "", NULL};
++		execv(argv[0], newargs);
++	}
++}
++
+Index: gdb/testsuite/gdb.threads/exec-and-threads.exp
+===================================================================
+RCS file: gdb/testsuite/gdb.threads/exec-and-threads.exp
+diff -N gdb/testsuite/gdb.threads/exec-and-threads.exp
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ gdb/testsuite/gdb.threads/exec-and-threads.exp	25 Apr 2008 11:40:14 -0000
+@@ -0,0 +1,50 @@
++# exec-and-threads.exp -- Expect script to test exec() and "info threads"
++# Copyright (C) 2004, 2006, 2007, 2008 Free Software Foundation, Inc.
++
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++# running "info threads" after an exec() (or similar) would relate in
++# crashing the debugger
++
++if $tracelevel then {
++	strace $tracelevel
++}
++
++set testfile "exec-and-threads"
++set srcfile ${testfile}.c
++set binfile ${objdir}/${subdir}/${testfile}
++
++if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "incdir=${objdir}"]] != "" } {
++    return -1
++}
++
++gdb_exit
++gdb_start
++gdb_reinitialize_dir $srcdir/$subdir
++gdb_load ${binfile}
++runto_main
++gdb_test "break thread" ""
++
++# Delete the breakpoint on main()
++gdb_test "delete 1" ""
++
++# continue the program, thread will launch and then exec itself
++gdb_test "continue" "Breakpoint 2, thread .*"
++
++# now we hit the same breakpoint in the second execution
++gdb_test "continue" "Breakpoint 2, thread .*"
++
++# and should be able to run info threads
++gdb_test "info threads" "\\* \[0-9] Thread .*\n.*\[0-9] Thread .*"
++
