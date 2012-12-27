@@ -9,7 +9,7 @@ add(nil, V) ->
     #node{l=nil, r=nil, v=V};
 % duplicate key
 add(#node{l=_, r=_, v={NodeKey, _}}, {ValueKey, _}) when ValueKey == NodeKey ->
-    erlang:error(key_exists);
+    throw(key_exists);
 % add to subtree
 add(#node{l=L, r=_, v={NodeKey, _}} = T, {ValueKey, _} = V) when ValueKey < NodeKey ->
     T#node{l=add(L, V)};
@@ -39,6 +39,10 @@ print(#node{l=L, r=R} = T, Prefix) ->
 %% ===================================================================
 -ifdef(TEST).
 
+create_random_list(Elements) ->
+    lists:sort(fun(_, _) -> random:uniform() > 0.5 end, lists:seq(1, Elements)).
+create_tree_from_list(Vals) ->
+    lists:foldl(fun(Val, Tree) -> add(Tree, {Val, Val}) end, nil, Vals).
 create_test() ->
     #node{l=nil, r=nil, v={1, 2}} = add(nil, {1, 2}).
 ordered_traversal_test() ->
@@ -47,9 +51,14 @@ ordered_traversal_test() ->
     % added backwards
     ordered_traversal_test(lists:reverse(lists:seq(1, 50)), lists:seq(1, 50)),
     % added in random order
-    ordered_traversal_test(lists:sort(fun(_, _) -> random:uniform() > 0.5 end, lists:seq(1, 50)), lists:seq(1, 50)).
+    ordered_traversal_test(create_random_list(50), lists:seq(1, 50)).
 ordered_traversal_test(Vals, ExpectedVals) ->
-    Tree = lists:foldl(fun(Val, Tree) -> add(Tree, {Val, Val}) end, nil, Vals),
+    Tree = create_tree_from_list(Vals),
     ExpectedVals = traverse_in_order(Tree, fun(L, {K, _}) -> L ++ [K] end, []).
+duplicate_key_add_test() ->
+    Tree = create_tree_from_list(create_random_list(50)),
+    try add(Tree, {22, 22})
+    catch key_exists -> ok
+    end.
 
 -endif.
