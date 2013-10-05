@@ -1,0 +1,120 @@
+
+:- setsemantics{equality(basic)}.
+
+/*
+[persistentmodules>>pm].
+
+main[%attach('hey', 'flora2', 'flora2', 'flora2')]@pm.
+*/
+
+Container[name *=> string, contents *=> Containee].
+Containee[name *=> string].
+
+WSClient::Containee[clientId *=> string].
+WSManager::Container[contents *=> WSClient].
+
+WebTab::Containee[url *=> string, tabId *=> integer].
+WebBrowser::Container[contents *=> WebTab].
+
+BufferView::Containee[id *=> string]. // TODO file type, non-filetype
+BufferEditor::Container[contents *=> BufferView].
+
+Terminal::Containee[id *=> integer].
+Terminal::Container[contents *=> BufferEditor].
+TerminalContainer::Container[contents *=> Terminal].
+
+//////
+
+flora2:BufferView[name -> '*flora2*'].
+flora2emacs:BufferEditor[name -> 'emacs', contents -> {flora2}].
+
+// this line should let emacs be DIRECTLY in tmux
+term1:Terminal[name -> 'emacs', contents -> {flora2emacs}].
+
+term2:Terminal[name -> 'zsh'].
+tmux1:WSClient[name -> 'flora-2'].
+tmux1:TerminalContainer[contents -> {term1, term2}].
+
+term3:Terminal[name -> 'openconnect'].
+tmux2:WSClient[name -> 'route'],
+tmux2:TerminalContainer[contents -> term3].
+
+tab1:WebTab[name -> 'GMail', url -> 'http://www.gmail.com', tabId -> 1].
+tab2:WebTab[name -> 'Facebook', url -> 'http://www.facebook.com', tabId -> 2].
+
+chrome:WebBrowser[contents -> {tab1, tab2}].
+chrome:WSClient[name -> 'chromium'].
+
+tabsOutliner:WSClient[name -> 'Tabs Outliner'].
+
+vlc:WSClient[name -> 'John Coltrane - Liberia - VLC media player', clientId -> '0x200000d'].
+
+//Wmii:WSManager[name -> 'wmii', contents -> {chrome, tmux1, vlc}].
+
+// WMII windowing layout - column oriented
+Wmii::Container[contents *=> WmiiTag, tag(string) *=> WmiiTag].
+WmiiTag::Container[contents *=> WmiiColumn].
+// TODO dimensions?
+WmiiColumn::Container[contents *=> WSClient].
+
+wmii:Wmii[name -> 'wmii (singleton/main window manager)'].
+tag1LeftCol:WmiiColumn[name -> '1 (leftmost column)'].
+tag1LeftCol[contents -> tabsOutliner].
+tag1RightCol:WmiiColumn[name -> '2 (right column)', contents -> {tmux2, chrome}].
+wmii[tag('1') -> _#:WmiiTag[name -> '1', contents -> {tag1LeftCol, tag1RightCol}]].
+wmii[contents -> wmii.tag('1')].
+
+%printClient(?x, ?tabs) :-
+	?x:Container[name -> ?xName],
+	(tab(?tabs), write(?xName), write(' ('), write(?x), write(') ->'), nl)@_plg,
+	?x:Container[contents -> ?xItem],
+	?tabs2 is ?tabs + 4,
+	%printClient(?xItem, ?tabs2).
+%printClient(?view, ?tabs) :-
+	?view:Containee[name -> ?viewName],
+	\+ ?view:Container,
+	(tab(?tabs), write(?viewName), write(' ('), write(?view), write(')'), nl)@_plg,
+	fail.
+
+%dump_state :-
+	?wm:Wmii[name -> ?wmName],
+	(write('Window manager '), writeln(?wmName))@_plg,
+	?wm:Wmii[contents -> ?wmWindow],
+	%printClient(?wmWindow, 4).
+
+//newmodule{mod}.
+
+// full path of containee
+fullName(?c, ?a, ?n) :-
+	?n:Container[contents->?c].
+
+//////////////////////
+// Key maps         //
+//////////////////////
+
+
+
+
+// Q: how is the system going to give a result about what action to execute
+
+:- use_argumentation_theory.
+
+@!{rule1[defeasible,tag->tag1,foo->1,bar->2]} ppp(?X) :- qqq(?X).
+
+x :- writeln(_@!)@_plg.
+/*
+@!{dbd[tag -> {xyz}, name->jess]}  :-
+	jess[lastname -> balint].
+*/
+
+cc :=: Wmii.
+
+KeyMap[].
+
+// TODO viewManagerPreviousView ... needs defined
+globalKeyMap:KeyMap[key("Mod4-b") -> viewManagerPreviousView].
+
+// wmii standard stuff
+globalKeyMap:KeyMap[key("Mod4-t") -> inputAndGotoTag].
+globalKeyMap:KeyMap[key("Mod4-k") -> goUp].
+
