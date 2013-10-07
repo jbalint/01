@@ -52,17 +52,23 @@ vlc:WSClient[name -> 'John Coltrane - Liberia - VLC media player', clientId -> '
 //Wmii:WSManager[name -> 'wmii', contents -> {chrome, tmux1, vlc}].
 
 // WMII windowing layout - column oriented
-Wmii::Container[contents *=> WmiiTag, tag(string) *=> WmiiTag].
-WmiiTag::Container[contents *=> WmiiColumn].
+Wmii::WSManager[tag(string) *=> WmiiTag].
+// TODO columns need to be ordered
+WmiiTag[name *=> string, columns *=> WmiiColumn].
 // TODO dimensions?
 WmiiColumn::Container[contents *=> WSClient].
+
+?X:Wmii[contents -> ?Y] :-
+	?X:Wmii[tag(?) -> ?T],
+	?Y = ?T.columns.contents.
 
 wmii:Wmii[name -> 'wmii (singleton/main window manager)'].
 tag1LeftCol:WmiiColumn[name -> '1 (leftmost column)'].
 tag1LeftCol[contents -> tabsOutliner].
 tag1RightCol:WmiiColumn[name -> '2 (right column)', contents -> {tmux2, chrome}].
-wmii[tag('1') -> _#:WmiiTag[name -> '1', contents -> {tag1LeftCol, tag1RightCol}]].
-wmii[contents -> wmii.tag('1')].
+wmii[tag('1') -> _#:WmiiTag[name -> '1', columns -> {tag1LeftCol, tag1RightCol}]].
+wmii[tag('2') -> _#:WmiiTag[name -> '2',
+	columns -> {_#:WmiiColumn[name -> '1 (only)', contents -> {tmux1}]}]].
 
 %printClient(?x, ?tabs) :-
 	?x:Container[name -> ?xName],
@@ -78,7 +84,7 @@ wmii[contents -> wmii.tag('1')].
 
 %dump_state :-
 	?wm:Wmii[name -> ?wmName],
-	(write('Window manager '), writeln(?wmName))@_plg,
+	(write('Window manager: '), writeln(?wmName))@_plg,
 	?wm:Wmii[contents -> ?wmWindow],
 	%printClient(?wmWindow, 4).
 
@@ -101,7 +107,7 @@ fullName(?c, ?a, ?n) :-
 
 @!{rule1[defeasible,tag->tag1,foo->1,bar->2]} ppp(?X) :- qqq(?X).
 
-x :- writeln(_@!)@_plg.
+//x :- writeln(_@!)@_plg.
 /*
 @!{dbd[tag -> {xyz}, name->jess]}  :-
 	jess[lastname -> balint].
@@ -118,3 +124,10 @@ globalKeyMap:KeyMap[key("Mod4-b") -> viewManagerPreviousView].
 globalKeyMap:KeyMap[key("Mod4-t") -> inputAndGotoTag].
 globalKeyMap:KeyMap[key("Mod4-k") -> goUp].
 
+// wmii-focus-manager
+WmiiTagFocusRequest[tagName *=> string].
+WmiiClientFocusRequest[clientId *=> string].
+
+// NOW how to route to wmii focus manager,
+// tmux focus manager,
+// emacs focus manager
