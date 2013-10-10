@@ -49,18 +49,34 @@ tabsOutliner:WSClient[name -> 'Tabs Outliner'].
 
 vlc:WSClient[name -> 'John Coltrane - Liberia - VLC media player', clientId -> '0x200000d'].
 
+FocusTarget[].
+
+Operation[handler *=> OperationHandler].
+
+
+// what handles the operation
+OperationHandler[id *=> string].
+
+FocusOperation::Operation[target *=> FocusTarget].
+
 //Wmii:WSManager[name -> 'wmii', contents -> {chrome, tmux1, vlc}].
 
 // WMII windowing layout - column oriented
-Wmii::WSManager[tag(string) *=> WmiiTag].
-// TODO columns need to be ordered
+Wmii[tag(string) *=> WmiiTag].
+Wmii::WSManager.
+
 WmiiTag[name *=> string, columns *=> WmiiColumn].
-// TODO dimensions?
+WmiiTag::FocusTarget.
+
 WmiiColumn::Container[contents *=> WSClient].
+WmiiColumn::FocusTarget.
 
 ?X:Wmii[contents -> ?Y] :-
 	?X:Wmii[tag(?) -> ?T],
 	?Y = ?T.columns.contents.
+
+key("Mod4-t", ?Action) :-
+	?Action = 'jess'.
 
 wmii:Wmii[name -> 'wmii (singleton/main window manager)'].
 tag1LeftCol:WmiiColumn[name -> '1 (leftmost column)'].
@@ -91,8 +107,11 @@ wmii[tag('2') -> _#:WmiiTag[name -> '2',
 //newmodule{mod}.
 
 // full path of containee
-fullName(?c, ?a, ?n) :-
-	?n:Container[contents->?c].
+//fullName(?c, ?a, ?n) :-
+//	?n:Container[contents->?c].
+
+?X:Wmii[z -> ?Y] :-
+	?Y = ?X.
 
 //////////////////////
 // Key maps         //
