@@ -1,8 +1,31 @@
 
 :- setsemantics{equality(basic)}.
 
+newmodule{test_log}.
+
+insertrule{%insert_hook(_Module,Term) :-
+	writeln(flora_concat_items(['Inserting ', Term]))}.
+
+flora_add_hook(test_log,insertfact,after,0,insert_hook(?X,?Y))@_plg(flrhooks).
+
 /*
 [persistentmodules>>pm].
+
+newmodule{db_mod3}.
+
+db_mod3[attach('hey', 'flora2', 'flora2', 'flora2')]@pm.
+
+db_mod3[detach]@pm.
+
+aux_get_db_handle('db_mod3', ?X)@_plg(flrpm),
+  catch{db_query(?X, Y, "asd",[])@_plg(db_interface),
+  xsb_error(database(?Db), ?Msg),
+  writeln('OK, HERE IS AN ERROR')@_plg}.
+
+aux_get_db_handle('db_mod3', ?X)@_plg(flrpm),
+  db_DML_sql_internal(?X, qHnd, ['selectfrom'], [], 'whatev', [])@_plg(flrpm).
+
+a@db_mod3.
 
 main[%attach('hey', 'flora2', 'flora2', 'flora2')]@pm.
 */

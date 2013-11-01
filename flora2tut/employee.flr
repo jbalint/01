@@ -1,0 +1,9 @@
+// Employees
+
+Employee[
+name *=> string,
+id *=> int,
+salary *=> int,
+division *=> Division@comp,
+project *=> Project@proj
+].

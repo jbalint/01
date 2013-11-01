@@ -1,0 +1,13 @@
+// Company module
+
+Company[
+name *=> string,
+division *=> Division,
+location *=> string
+].
+
+Division[
+name *=> string,
+location *=> string,
+employees *=> ${Employee@emp}
+].
