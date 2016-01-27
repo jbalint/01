@@ -1,0 +1,76 @@
+# Foundations of Rule-Based Query Answering
+
+@prefix f: <http://jbalint/frbqa#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://jbalint/frbqa>
+  rdf:type owl:Ontology ;
+.
+
+f:Set
+    a owl:Class ;
+.
+
+f:Nat
+    a f:Set ;
+.
+
+f:Function
+    a owl:Class ;
+.
+
+f:Surjection
+    a owl:Class ;
+    rdfs:subClassOf f:Function ;
+.
+
+f:mapsFrom
+    a owl:ObjectProperty ;
+    rdfs:domain f:Function ;
+    rdfs:range f:Set ;
+.
+
+f:mapsTo
+    a owl:ObjectProperty ;
+    rdfs:domain f:Function ;
+    rdfs:range f:Set ;
+.
+
+# Stardog doesn't deal well with anonymous classes, naming stuff
+f:SurjectionFromNat
+    a owl:Class ;
+    owl:intersectionOf (
+        f:Surjection
+        [
+            a owl:restriction ;
+            owl:onProperty f:mapsFrom ;
+            owl:hasValue f:Nat ;
+        ]
+    ) ;
+.
+
+f:Enumerable
+    a owl:Class ;
+    owl:equivalentClass [
+        # the restriction on mapsTo^- applies this to sets
+        a owl:Restriction ;
+        owl:onProperty [owl:inverseOf f:mapsTo] ;
+        owl:someValuesFrom f:SurjectionFromNat ;
+    ] ;
+    rdfs:comment "Definition 1" ;
+.
+
+_:someSet a owl:Thing
+.
+
+_:theSurjection # which makes it Enumerable
+    a f:Surjection ;
+    f:mapsFrom f:Nat ;
+    f:mapsTo _:someSet ;
+.
+
+# ?a a f:Enumerable
+# Shows that _:someSet is f:Enumerable
