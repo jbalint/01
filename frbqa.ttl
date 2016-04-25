@@ -39,27 +39,31 @@ f:mapsTo
     rdfs:range f:Set ;
 .
 
+f:FromNat
+    a owl:restriction ;
+    owl:onProperty f:mapsFrom ;
+    owl:hasValue f:Nat ;
+.
+
 # Stardog doesn't deal well with anonymous classes, naming stuff
 f:SurjectionFromNat
     a owl:Class ;
     owl:intersectionOf (
         f:Surjection
-        [
-            a owl:restriction ;
-            owl:onProperty f:mapsFrom ;
-            owl:hasValue f:Nat ;
-        ]
+        f:FromNat
     ) ;
+.
+
+f:EnumerableIfSurjectionFromNat
+    # the restriction on mapsTo^- applies this to sets
+    a owl:Restriction ;
+    owl:onProperty [owl:inverseOf f:mapsTo] ;
+    owl:someValuesFrom f:SurjectionFromNat ;
 .
 
 f:Enumerable
     a owl:Class ;
-    owl:equivalentClass [
-        # the restriction on mapsTo^- applies this to sets
-        a owl:Restriction ;
-        owl:onProperty [owl:inverseOf f:mapsTo] ;
-        owl:someValuesFrom f:SurjectionFromNat ;
-    ] ;
+    owl:equivalentClass f:EnumerableIfSurjectionFromNat ;
     rdfs:comment "Definition 1" ;
 .
 
@@ -74,3 +78,33 @@ _:theSurjection # which makes it Enumerable
 
 # ?a a f:Enumerable
 # Shows that _:someSet is f:Enumerable
+
+f:FunctionSymbol
+    a owl:Class ;
+    rdfs:comment "A function symbol used in logical terms"
+.
+
+f:Variable
+    a owl:Class ;
+.
+
+f:Constant
+    a owl:Class ;
+    owl:disjointWith f:Variable
+.
+
+f:Functor
+    a owl:Class ;
+    owl:disjointWith f:Variable ;
+    owl:disjointWith f:Constant ;
+.
+
+f:Term
+    a owl:Class ;
+    rdfs:comment "Definition 4" ;
+    owl:unionOf (
+        f:Variable
+        f:Constant
+        f:Functor
+    ) ;
+.
