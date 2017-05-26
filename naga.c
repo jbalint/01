@@ -21,9 +21,11 @@ int main(int argc, char **argv)
     }
     while ((sz = read(fd, &ev, sizeof(struct input_event))) > 0)
     {
-        if (ev.type == EV_KEY) {
+        // ev.value (0 = release, 1 = press, 2 = autorepeat)
+        if (ev.type == EV_KEY && ev.value == 1) {
             /* ev.code will be KEY_1-KEY_EQUAL (2-13) */
-            printf("Key: %d\n", ev.code);
+            printf("%d\n", ev.code - 1);
+            fflush(0);
         }
     }
     perror("Failed to read");
